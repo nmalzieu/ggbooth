@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.debug = True
 
 global printing_time
-printing_time = 56  # From reviews, printing takes 56 seconds
+printing_time = 65  # From reviews, printing takes 56 seconds
 global last_printing_beginning
 global state
 
@@ -93,11 +93,13 @@ def ready():
             pass
         elif is_there_green():
             # Print picture
-            print "PRINTING LAST PICTURE"
-            last_picture = pending_pictures[-1]
-            last_picture_name = last_picture.split('/')[-1]
-            printing_picture_path = 'printing_pictures/%s' % last_picture_name
-            os.rename(last_picture, printing_picture_path)
+            if len(pending_pictures) == 1:
+                print "PRINTING LAST PICTURE"
+                last_picture = pending_pictures[-1]
+                last_picture_name = last_picture.split('/')[-1]
+                printing_picture_path = 'printing_pictures/%s' % last_picture_name
+                os.rename(last_picture, printing_picture_path)
+                subprocess.Popen(['lp', '-o', 'media=Postcard(4x6in)', '-o', 'landscape', printing_picture_path])
         elif is_there_red():
             # Cancel, not printing, archiving
             print "ARCHIVING PICTURE"
