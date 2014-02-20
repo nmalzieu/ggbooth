@@ -3,6 +3,7 @@ import os
 import json
 import time
 import subprocess
+from PIL import Image, ImageEnhance
 
 from flask import Flask
 from flask import render_template
@@ -14,6 +15,8 @@ global printing_time
 printing_time = 65  # From reviews, printing takes 56 seconds
 global last_printing_beginning
 global state
+global wat
+wat = Image.open('static/images/watermark.png')
 
 state = 0
 
@@ -36,6 +39,37 @@ def clean_red_green():
     if is_there_green():
         os.remove('green')
 
+def set_count(count):
+    with open('count.txt', 'w') as countfile:
+        countfile.write(str(count))
+
+
+def watermark(im, mark, position, opacity=1):
+    """Adds a watermark to an image."""
+    if opacity < 1:
+        mark = reduce_opacity(mark, opacity)
+    if im.mode != 'RGBA':
+        im = im.convert('RGBA')
+    # create a transparent layer the size of the image and draw the
+    # watermark in that layer.
+    layer = Image.new('RGBA', im.size, (0, 0, 0, 0))
+    if position == 'tile':
+        for y in range(0, im.size[1], mark.size[1]):
+            for x in range(0, im.size[0], mark.size[0]):
+                layer.paste(mark, (x, y))
+    elif position == 'scale':
+        # scale, but preserve the aspect ratio
+        ratio = min(
+            float(im.size[0]) / mark.size[0], float(im.size[1]) / mark.size[1])
+        w = int(mark.size[0] * ratio)
+        h = int(mark.size[1] * ratio)
+        mark = mark.resize((w, h))
+        layer.paste(mark, ((im.size[0] - w) / 2, (im.size[1] - h) / 2))
+    else:
+        layer.paste(mark, position)
+    # composite the watermark with the layer
+    return Image.composite(layer, im, layer)
+
 
 @app.route('/')
 def home():
@@ -52,6 +86,8 @@ def ready():
     global state
     global printing_time
     global last_printing_beginning
+    global wat
+
     # Checking pending pictures folder
     pending_pictures = filter(os.path.isfile, glob.glob('static/pending_pictures/*.jpg'))
     pending_pictures.sort(key=lambda x: os.path.getmtime(x))
@@ -82,6 +118,15 @@ def ready():
     elif pending_pictures:
         # Pending: showing picture
         # if red or green, change state
+        if state != 2:
+            # Picture was JUST taken, let's apply watermark
+            with open(pending_pictures[-1], 'rb') as im:
+                print pending_pictures[-1]
+                image = Image.open(im)
+                im_watermarked = watermark(image, wat, (2150, 1300))
+                im_watermarked.save(pending_pictures[-1])
+                del im_watermarked
+                del image
         state = 2
         response = json.dumps(
             {
@@ -101,6 +146,7 @@ def ready():
                 printing_picture_path = 'printing_pictures/%s' % last_picture_name
                 os.rename(last_picture, printing_picture_path)
                 subprocess.Popen(['lp', '-o', 'media=Postcard(4x6in)', '-o', 'landscape', printing_picture_path])
+                # set_count(count-1)
         elif is_there_red():
             # Cancel, not printing, archiving
             print "ARCHIVING PICTURE"
@@ -130,21 +176,34 @@ def ready():
             }
         )
     else:
-        state = 0
-        response = json.dumps(
-            {
-                'state': 0,
-                'html': render_template('ready.html')
-            }
-        )
-        if is_there_green_and_red():
-            pass
-        elif is_there_green():
-            # Let's take a picture!!
-            open('state_files/picture_taking', 'a').close()
-            timestamp = time.time()
-            filename_arg = '--filename=%s.jpg' % timestamp
-            subprocess.Popen(['gphoto2', filename_arg, '--capture-image-and-download'], cwd='static/pending_pictures/')
+        count = 0
+        with open('count.txt', 'r') as countfile:
+            count = int(countfile.read())
+        if count > 3:
+            state = 0
+            response = json.dumps(
+                {
+                    'state': 0,
+                    'html': render_template('ready.html')
+                }
+            )
+            if is_there_green_and_red():
+                pass
+            elif is_there_green():
+                # Let's take a picture!!
+                open('state_files/picture_taking', 'a').close()
+                timestamp = time.time()
+                filename_arg = '--filename=%s.jpg' % timestamp
+                subprocess.Popen(['gphoto2', filename_arg, '--capture-image-and-download'], cwd='static/pending_pictures/')
+                set_count(count-1)
+        else:
+            state = 4
+            response = json.dumps(
+                {
+                    'state': 4,
+                    'html': render_template('nopaper.html')
+                }
+            )
 
     clean_red_green()
     return response
