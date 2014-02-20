@@ -3,7 +3,7 @@ import os
 import json
 import time
 import subprocess
-from PIL import Image, ImageEnhance
+from PIL import Image
 
 from flask import Flask
 from flask import render_template
@@ -17,6 +17,8 @@ global last_printing_beginning
 global state
 global wat
 wat = Image.open('static/images/watermark.png')
+
+global count
 
 state = 0
 
@@ -39,6 +41,7 @@ def clean_red_green():
     if is_there_green():
         os.remove('green')
 
+
 def set_count(count):
     with open('count.txt', 'w') as countfile:
         countfile.write(str(count))
@@ -46,8 +49,6 @@ def set_count(count):
 
 def watermark(im, mark, position, opacity=1):
     """Adds a watermark to an image."""
-    if opacity < 1:
-        mark = reduce_opacity(mark, opacity)
     if im.mode != 'RGBA':
         im = im.convert('RGBA')
     # create a transparent layer the size of the image and draw the
@@ -87,6 +88,10 @@ def ready():
     global printing_time
     global last_printing_beginning
     global wat
+    global count
+
+    with open('count.txt', 'r') as countfile:
+        count = int(countfile.read())
 
     # Checking pending pictures folder
     pending_pictures = filter(os.path.isfile, glob.glob('static/pending_pictures/*.jpg'))
@@ -146,7 +151,8 @@ def ready():
                 printing_picture_path = 'printing_pictures/%s' % last_picture_name
                 os.rename(last_picture, printing_picture_path)
                 subprocess.Popen(['lp', '-o', 'media=Postcard(4x6in)', '-o', 'landscape', printing_picture_path])
-                # set_count(count-1)
+                # Print process sent: let's reduce count so we know when there is no more paper
+                set_count(count - 1)
         elif is_there_red():
             # Cancel, not printing, archiving
             print "ARCHIVING PICTURE"
@@ -176,9 +182,6 @@ def ready():
             }
         )
     else:
-        count = 0
-        with open('count.txt', 'r') as countfile:
-            count = int(countfile.read())
         if count > 3:
             state = 0
             response = json.dumps(
@@ -195,7 +198,6 @@ def ready():
                 timestamp = time.time()
                 filename_arg = '--filename=%s.jpg' % timestamp
                 subprocess.Popen(['gphoto2', filename_arg, '--capture-image-and-download'], cwd='static/pending_pictures/')
-                set_count(count-1)
         else:
             state = 4
             response = json.dumps(
