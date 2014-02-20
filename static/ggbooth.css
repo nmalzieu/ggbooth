@@ -1,0 +1,41 @@
+body{
+    background-image: url('/static/images/bg.jpg');
+    color: rgb(0, 193, 218);
+    text-align: center;
+    font-family: "Fiolex Girls";
+}
+
+h1{
+    margin-top: 20%;
+    font-size: 70;
+}
+
+h2{
+    margin:0;
+}
+
+img{
+    margin:20;
+     -webkit-transform:rotate(2deg);
+    -moz-transform: rotate(2deg);
+    -o-transform: rotate(2deg);
+    -ms-transform: rotate(2deg);
+    transform: rotate(2deg);
+    /*because the image is rotated the opposite way, the drop-shadow needs moving to the other side of the image*/
+    -webkit-box-shadow: 4px 4px 8px -4px rgba(0, 0, 0, .75);
+    -moz-box-shadow: 4px 4px 8px -4px rgba(0, 0, 0, .75);
+    box-shadow: -4px 4px 8px -4px rgba(0, 0, 0, .75);
+}
+
+div{
+    font-size: 50;
+}
+
+.red{
+    color: rgb(255, 77, 66);
+}
+
+.green{
+    color: rgb(0, 204, 131);
+}
+

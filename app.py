@@ -39,6 +39,10 @@ def clean_red_green():
 
 @app.route('/')
 def home():
+    clean_red_green()
+    picture_taking = len(glob.glob('state_files/picture_taking'))
+    if picture_taking:
+        os.remove('state_files/picture_taking')
     return render_template('home.html')
 
 
@@ -70,7 +74,8 @@ def ready():
         state = 1
         response = json.dumps(
             {
-                'state': 1
+                'state': 1,
+                'html': render_template('taking_picture.html')
             }
         )
     elif pending_pictures:
@@ -80,7 +85,7 @@ def ready():
         response = json.dumps(
             {
                 'state': 2,
-                'last_picture': pending_pictures[-1]
+                'html': render_template('last_picture.html', last_picture_url=pending_pictures[-1])
             }
         )
         if is_there_green_and_red():
@@ -117,14 +122,16 @@ def ready():
         state = 3
         response = json.dumps(
             {
-                'state': 3
+                'state': 3,
+                'html': render_template('printing.html')
             }
         )
     else:
         state = 0
         response = json.dumps(
             {
-                'state': 0
+                'state': 0,
+                'html': render_template('ready.html')
             }
         )
         if is_there_green_and_red():
