@@ -43,6 +43,7 @@ def home():
     picture_taking = len(glob.glob('state_files/picture_taking'))
     if picture_taking:
         os.remove('state_files/picture_taking')
+    subprocess.Popen(['killall', 'PTPCamera'])
     return render_template('home.html')
 
 

@@ -2,6 +2,15 @@
 <head>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script src="/static/photomat.js"></script>
+<script>
+var dots = window.setInterval( function() {
+    var wait = document.getElementById("wait");
+    if ( wait.innerHTML.length > 2 ) 
+        wait.innerHTML = "";
+    else 
+        wait.innerHTML += ".";
+    }, 400);
+</script>
 <link rel="stylesheet" type="text/css" href="/static/ggbooth.css">
 </head>
 <body>
