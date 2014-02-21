@@ -21,7 +21,7 @@ global photo_timer
 global taking_picture_bool
 taking_picture_bool = False
 global photo_timer_duration
-photo_timer_duration = 5
+photo_timer_duration = 8
 photo_timer = 0
 wat = Image.open('static/images/watermark.png')
 
@@ -189,7 +189,7 @@ def ready():
                 with open(pending_pictures[-1], 'rb') as im:
                     print pending_pictures[-1]
                     image = Image.open(im)
-                    im_watermarked = watermark(image, wat, (2150, 1300))
+                    im_watermarked = watermark(image, wat, (2120, 1300))
                     im_watermarked.save(pending_pictures[-1])
                     del im_watermarked
                     del image
@@ -243,7 +243,7 @@ def ready():
                 }
             )
         else:
-            if count > 3:
+            if count > 2:
                 if state != 5:
                     taking_picture_bool = False
                     state = 0
@@ -257,7 +257,8 @@ def ready():
                     # We're in timer mode
                     if time.time() - photo_timer >= photo_timer_duration:
                         notifyPicture()
-                    elif time.time() - photo_timer >= photo_timer_duration - 1 and not taking_picture_bool:
+                    elif time.time() - photo_timer >= photo_timer_duration - 6 and not taking_picture_bool:
+                        subprocess.Popen(['killall', 'PTPCamera'])
                         taking_picture_bool = True
                         takePicture()
                     json_response = json.dumps(
@@ -273,7 +274,7 @@ def ready():
                     json_response = json.dumps(
                         {
                             'state': 5,
-                            'html': render_template('picture_timer.html', timer=5)
+                            'html': render_template('picture_timer.html', timer=8)
                         }
                     )
                     photo_timer = time.time()
