@@ -18,6 +18,8 @@ global last_printing_beginning
 global state
 global wat
 global photo_timer
+global taking_picture_bool
+taking_picture_bool = False
 global photo_timer_duration
 photo_timer_duration = 5
 photo_timer = 0
@@ -95,7 +97,7 @@ def asyncPicture(onExit, filename_arg):
     would give to subprocess.Popen.
     """
     def runInThread(onExit, filename_arg):
-        photoProcess = subprocess.Popen(['gphoto2', filename_arg, '--capture-image-and-download'], cwd='static/pending_pictures/')
+        photoProcess = subprocess.Popen(['gphoto2', '--port=usb:253,004', filename_arg, '--capture-image-and-download'], cwd='static/pending_pictures/')
         # wait for the process to terminate
         out, err = photoProcess.communicate()
         errcode = photoProcess.returncode
@@ -109,6 +111,7 @@ def asyncPicture(onExit, filename_arg):
 
 def takePicture():
     # Let's take a picture!!
+    print "PICTURE IS TAKING"
     timestamp = time.time()
     filename_arg = '--filename=%s.jpg' % timestamp
     asyncPicture(asyncPictureDone, filename_arg)
@@ -139,6 +142,7 @@ def ready():
     global photo_timer
     global photo_timer_duration
     global booth_error
+    global taking_picture_bool
 
     if booth_error:
         state = -1
@@ -241,6 +245,7 @@ def ready():
         else:
             if count > 3:
                 if state != 5:
+                    taking_picture_bool = False
                     state = 0
                     json_response = json.dumps(
                         {
@@ -252,7 +257,8 @@ def ready():
                     # We're in timer mode
                     if time.time() - photo_timer >= photo_timer_duration:
                         notifyPicture()
-                    elif time.time() - photo_timer >= photo_timer_duration - 1:
+                    elif time.time() - photo_timer >= photo_timer_duration - 1 and not taking_picture_bool:
+                        taking_picture_bool = True
                         takePicture()
                     json_response = json.dumps(
                         {
