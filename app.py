@@ -109,10 +109,12 @@ def asyncPicture(onExit, filename_arg):
 
 def takePicture():
     # Let's take a picture!!
-    open('state_files/picture_taking', 'a').close()
     timestamp = time.time()
     filename_arg = '--filename=%s.jpg' % timestamp
     asyncPicture(asyncPictureDone, filename_arg)
+
+def notifyPicture():
+    open('state_files/picture_taking', 'a').close()
 
 
 @app.route('/')
@@ -249,6 +251,8 @@ def ready():
                 else:
                     # We're in timer mode
                     if time.time() - photo_timer >= photo_timer_duration:
+                        notifyPicture()
+                    elif time.time() - photo_timer >= photo_timer_duration - 1:
                         takePicture()
                     json_response = json.dumps(
                         {
