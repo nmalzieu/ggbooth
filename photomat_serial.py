@@ -52,7 +52,7 @@ def redClick():
     print "RED"
     open('red', 'a').close()
 
-pyMathon = PhotoMatonSerial('/dev/tty.usbmodemfa131')
+pyMathon = PhotoMatonSerial('/dev/tty.usbmodemfd121')
 pyMathon.onRedClick(redClick)
 pyMathon.onGreenClick(greenClick)
 pyMathon.open()

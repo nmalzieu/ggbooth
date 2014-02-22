@@ -131,6 +131,10 @@ def home():
     subprocess.Popen(['killall', 'PTPCamera'])
     return render_template('home.html')
 
+@app.route('/count/')
+def initcount():
+    set_count(36)
+    return "Count is now 36"
 
 @app.route('/state/')
 def ready():
